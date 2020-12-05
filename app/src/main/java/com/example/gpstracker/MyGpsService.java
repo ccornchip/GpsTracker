@@ -6,6 +6,7 @@ import android.os.IBinder;
 
 import org.java_websocket.server.WebSocketServer;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class MyGpsService extends Service {
@@ -37,8 +38,8 @@ public class MyGpsService extends Service {
     public void onDestroy() {
         super.onDestroy();
         try {
-            wss.stop(0);
-        } catch (InterruptedException e) {
+            wss.stop();
+        } catch (InterruptedException | IOException e) {
             e.printStackTrace();
         }
     }

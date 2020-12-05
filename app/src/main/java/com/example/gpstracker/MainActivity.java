@@ -1,9 +1,11 @@
 package com.example.gpstracker;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.PersistableBundle;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -18,20 +20,24 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
+    private static final String SERVICE_RUNNING = "SERVICE_RUNNING";
 
     private Button mButton;
-    private boolean serviceIsStarted;
+    private boolean serviceIsStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        if (savedInstanceState != null) {
+            serviceIsStarted = savedInstanceState.getBoolean(SERVICE_RUNNING);
+        }
+
         TextView textView = findViewById(R.id.textView);
         textView.setText(getIpAddress());
 
         mButton = findViewById(R.id.button);
-        serviceIsStarted = false;
         updateButtonText();
         Intent intent = new Intent(this, MyGpsService.class);
         mButton.setOnClickListener(v -> {
@@ -46,6 +52,12 @@ public class MainActivity extends AppCompatActivity {
             updateButtonText();
         });
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putBoolean(SERVICE_RUNNING, serviceIsStarted);
     }
 
     private void updateButtonText() {
