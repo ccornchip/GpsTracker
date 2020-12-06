@@ -1,20 +1,17 @@
 package com.example.gpstracker;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.PersistableBundle;
 import android.widget.Button;
 import android.widget.TextView;
 
-import org.java_websocket.WebSocket;
-import org.java_websocket.handshake.ClientHandshake;
-import org.java_websocket.server.WebSocketServer;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
@@ -39,19 +36,32 @@ public class MainActivity extends AppCompatActivity {
 
         mButton = findViewById(R.id.button);
         updateButtonText();
-        Intent intent = new Intent(this, MyGpsService.class);
         mButton.setOnClickListener(v -> {
             textView.setText(getIpAddress());
 
             if (!serviceIsStarted) {
-                startService(intent);
+                askPermissionsAndStartService();
             } else {
-                stopService(intent);
+                stopService(new Intent(this, MyGpsService.class));
             }
             serviceIsStarted = !serviceIsStarted;
             updateButtonText();
         });
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        askPermissionsAndStartService();
+    }
+
+    private void askPermissionsAndStartService() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+        } else {
+            startService(new Intent(this, MyGpsService.class));
+        }
     }
 
     @Override
