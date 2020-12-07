@@ -13,12 +13,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
-
 public class MyGpsService extends Service {
     private LocationManager locationManager;
-    private MyWebSocketServer wss;
 
     @Override
     public void onCreate() {
@@ -29,12 +25,6 @@ public class MyGpsService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         int response = super.onStartCommand(intent, flags, startId);
-
-        int port = 3000;
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
-        wss = new MyWebSocketServer(inetSocketAddress);
-        wss.start();
-
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
@@ -47,12 +37,6 @@ public class MyGpsService extends Service {
     public void onDestroy() {
         super.onDestroy();
         locationManager.removeUpdates(locationListener);
-
-        try {
-            wss.stop();
-        } catch (InterruptedException | IOException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -79,7 +63,6 @@ public class MyGpsService extends Service {
             String json = "{\"timestamp\":" + time +
                     ",\"latitude\":" + latitude +
                     ",\"longitude\":" + longitude + "}";
-            wss.sendMessage(json);
             System.out.println(json);
         }
     };
