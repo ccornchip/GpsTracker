@@ -17,12 +17,13 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 public class MyGpsService extends Service {
-
+    private LocationManager locationManager;
     private MyWebSocketServer wss;
 
     @Override
     public void onCreate() {
         super.onCreate();
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
     }
 
     @Override
@@ -33,30 +34,6 @@ public class MyGpsService extends Service {
         InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
         wss = new MyWebSocketServer(inetSocketAddress);
         wss.start();
-
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-
-        LocationListener locationListener = new LocationListener() {
-            @Override
-            public void onProviderDisabled(@NonNull String provider) {
-                Toast.makeText(MyGpsService.this, "GPS disabled", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onProviderEnabled(@NonNull String provider) {
-            }
-
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
-                double latitude = location.getLatitude();
-                double longitude = location.getLongitude();
-                long time = System.currentTimeMillis();
-                String json = "{\"timestamp\":" + time +
-                        ",\"latitude\":" + latitude +
-                        ",\"longitude\":" + longitude + "}";
-                wss.sendMessage(json);
-            }
-        };
 
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -69,6 +46,8 @@ public class MyGpsService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        locationManager.removeUpdates(locationListener);
+
         try {
             wss.stop();
         } catch (InterruptedException | IOException e) {
@@ -81,4 +60,28 @@ public class MyGpsService extends Service {
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onProviderDisabled(@NonNull String provider) {
+            Toast.makeText(MyGpsService.this, "GPS disabled", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onProviderEnabled(@NonNull String provider) {
+        }
+
+        @Override
+        public void onLocationChanged(@NonNull Location location) {
+            double latitude = location.getLatitude();
+            double longitude = location.getLongitude();
+            long time = System.currentTimeMillis();
+            String json = "{\"timestamp\":" + time +
+                    ",\"latitude\":" + latitude +
+                    ",\"longitude\":" + longitude + "}";
+            wss.sendMessage(json);
+            System.out.println(json);
+        }
+    };
+
 }
