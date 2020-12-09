@@ -1,10 +1,15 @@
 package com.example.gpstracker;
 
 import android.Manifest;
+import android.app.ActivityManager;
+import android.app.Service;
+import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.View;
+import android.os.IBinder;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -43,11 +48,35 @@ public class MainActivity extends AppCompatActivity {
             if (!serviceIsStarted) {
                 askPermissionsAndStartService();
             } else {
-                stopService(new Intent(this, MyGpsService.class));
+//                stopService(new Intent(this, MyGpsService.class));
+//                unbindService(new ServiceConnection() {
+//                    @Override
+//                    public void onServiceConnected(ComponentName name, IBinder service) {
+//                        System.out.println("connected");
+//                    }
+//
+//                    @Override
+//                    public void onServiceDisconnected(ComponentName name) {
+//                        System.out.println("disconnected");
+//                    }
+//                });
+                stopService(new Intent(this, GpsForegroundService.class));
             }
             serviceIsStarted = !serviceIsStarted;
             updateButtonText();
         });
+
+        bindService(new Intent(this, GpsForegroundService.class), new ServiceConnection() {
+            @Override
+            public void onServiceConnected(ComponentName name, IBinder service) {
+                System.out.println("connected");
+            }
+
+            @Override
+            public void onServiceDisconnected(ComponentName name) {
+                System.out.println("disconnected");
+            }
+        }, Context.BIND_ABOVE_CLIENT);
 
     }
 
@@ -57,11 +86,35 @@ public class MainActivity extends AppCompatActivity {
         askPermissionsAndStartService();
     }
 
+    private boolean isMyServiceRunning(Class<?> serviceClass) {
+        ActivityManager manager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        for (ActivityManager.RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (serviceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void askPermissionsAndStartService() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         } else {
-            startService(new Intent(this, MyGpsService.class));
+            Intent serviceIntent = new Intent(this, GpsForegroundService.class);
+
+//            startService(new Intent(this, MyGpsService.class));
+            startForegroundService(serviceIntent);
+            bindService(serviceIntent, new ServiceConnection() {
+                @Override
+                public void onServiceConnected(ComponentName name, IBinder service) {
+                    System.out.println("connected");
+                }
+
+                @Override
+                public void onServiceDisconnected(ComponentName name) {
+                    System.out.println("disconnected");
+                }
+            }, Context.BIND_ABOVE_CLIENT);
         }
     }
 
