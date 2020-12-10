@@ -2,9 +2,7 @@ package com.example.gpstracker;
 
 import android.Manifest;
 import android.app.ActivityManager;
-import android.app.Service;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -22,15 +20,17 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements ServiceConnection {
     private static final String SERVICE_RUNNING = "SERVICE_RUNNING";
 
     private Button mButton;
     private boolean serviceIsStarted = false;
+    private Intent gpsForegroundServiceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        gpsForegroundServiceIntent = new Intent(this, GpsForegroundService.class);
         setContentView(R.layout.activity_main);
 
         if (savedInstanceState != null) {
@@ -48,35 +48,13 @@ public class MainActivity extends AppCompatActivity {
             if (!serviceIsStarted) {
                 askPermissionsAndStartService();
             } else {
-//                stopService(new Intent(this, MyGpsService.class));
-//                unbindService(new ServiceConnection() {
-//                    @Override
-//                    public void onServiceConnected(ComponentName name, IBinder service) {
-//                        System.out.println("connected");
-//                    }
-//
-//                    @Override
-//                    public void onServiceDisconnected(ComponentName name) {
-//                        System.out.println("disconnected");
-//                    }
-//                });
-                stopService(new Intent(this, GpsForegroundService.class));
+                stopService(gpsForegroundServiceIntent);
             }
             serviceIsStarted = !serviceIsStarted;
             updateButtonText();
         });
 
-        bindService(new Intent(this, GpsForegroundService.class), new ServiceConnection() {
-            @Override
-            public void onServiceConnected(ComponentName name, IBinder service) {
-                System.out.println("connected");
-            }
-
-            @Override
-            public void onServiceDisconnected(ComponentName name) {
-                System.out.println("disconnected");
-            }
-        }, Context.BIND_ABOVE_CLIENT);
+        bindService(gpsForegroundServiceIntent, this, BIND_ABOVE_CLIENT);
 
     }
 
@@ -100,21 +78,9 @@ public class MainActivity extends AppCompatActivity {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         } else {
-            Intent serviceIntent = new Intent(this, GpsForegroundService.class);
-
 //            startService(new Intent(this, MyGpsService.class));
-            startForegroundService(serviceIntent);
-            bindService(serviceIntent, new ServiceConnection() {
-                @Override
-                public void onServiceConnected(ComponentName name, IBinder service) {
-                    System.out.println("connected");
-                }
-
-                @Override
-                public void onServiceDisconnected(ComponentName name) {
-                    System.out.println("disconnected");
-                }
-            }, Context.BIND_ABOVE_CLIENT);
+            startForegroundService(gpsForegroundServiceIntent);
+            bindService(gpsForegroundServiceIntent, this, BIND_ABOVE_CLIENT);
         }
     }
 
@@ -149,5 +115,20 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         return null;
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder binder) {
+        System.out.println("connected");
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        System.out.println("disconnected");
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 }
