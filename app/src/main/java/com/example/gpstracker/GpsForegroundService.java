@@ -19,22 +19,33 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import java.io.FileDescriptor;
+import java.util.function.Consumer;
 
 public class GpsForegroundService extends Service {
     public static final String CHANNEL_ID = "CHANNEL_ID";
 
+    private boolean isRunning = false;
+    private Consumer<Boolean> isRunningListener;
+
     public GpsForegroundService() {
+    }
+
+    public void setIsRunningListener(Consumer<Boolean> isRunningListener) {
+        this.isRunningListener = isRunningListener;
+        if (isRunningListener != null) isRunningListener.accept(isRunning);
+    }
+
+    class GpsBinder extends Binder {
+        public GpsForegroundService getService() {
+            return GpsForegroundService.this;
+        }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
 //        throw new UnsupportedOperationException("Not yet implemented");
-        return new Binder(){
-            public GpsForegroundService getService() {
-                return GpsForegroundService.this;
-            }
-        };
+        return new GpsBinder();
     }
 
     @Override
@@ -53,6 +64,8 @@ public class GpsForegroundService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
 
         startForeground(1, builder.build());
+        isRunning = true;
+        if (isRunningListener != null) isRunningListener.accept(true);
 
         return START_NOT_STICKY;
     }
@@ -76,5 +89,7 @@ public class GpsForegroundService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        isRunning = false;
+        if (isRunningListener != null) isRunningListener.accept(false);
     }
 }

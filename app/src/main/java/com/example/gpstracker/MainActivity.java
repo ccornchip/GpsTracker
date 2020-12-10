@@ -2,6 +2,7 @@ package com.example.gpstracker;
 
 import android.Manifest;
 import android.app.ActivityManager;
+import android.app.Application;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -41,17 +42,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         textView.setText(getIpAddress());
 
         mButton = findViewById(R.id.button);
-        updateButtonText();
+//        updateButtonText();
         mButton.setOnClickListener(v -> {
             textView.setText(getIpAddress());
 
-            if (!serviceIsStarted) {
+            if (mButton.getText().equals(getResources().getString(R.string.start_text))) {
                 askPermissionsAndStartService();
             } else {
                 stopService(gpsForegroundServiceIntent);
             }
-            serviceIsStarted = !serviceIsStarted;
-            updateButtonText();
+//            serviceIsStarted = !serviceIsStarted;
+//            updateButtonText();
         });
 
         bindService(gpsForegroundServiceIntent, this, BIND_ABOVE_CLIENT);
@@ -90,13 +91,13 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         outState.putBoolean(SERVICE_RUNNING, serviceIsStarted);
     }
 
-    private void updateButtonText() {
-        if (!serviceIsStarted) {
-            mButton.setText(R.string.start_text);
-        } else {
-            mButton.setText(R.string.stop_text);
-        }
-    }
+//    private void updateButtonText() {
+//        if (!serviceIsStarted) {
+//            mButton.setText(R.string.start_text);
+//        } else {
+//            mButton.setText(R.string.stop_text);
+//        }
+//    }
 
     public static String getIpAddress() {
         try {
@@ -120,6 +121,17 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
     @Override
     public void onServiceConnected(ComponentName name, IBinder binder) {
         System.out.println("connected");
+        GpsForegroundService service = ((GpsForegroundService.GpsBinder) binder).getService();
+
+        service.setIsRunningListener(isRunnning -> {
+            if (isRunnning) {
+                mButton.setText(R.string.stop_text);
+            } else {
+                mButton.setText(R.string.start_text);
+            }
+        });
+
+        System.out.println();
     }
 
     @Override
