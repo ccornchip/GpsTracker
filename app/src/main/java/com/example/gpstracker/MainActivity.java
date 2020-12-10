@@ -19,7 +19,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-public class MainActivity extends AppCompatActivity implements ServiceConnection {
+public class MainActivity extends AppCompatActivity {
 
     private Button mButton;
     private Intent gpsForegroundServiceIntent;
@@ -43,7 +43,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
                 stopService(gpsForegroundServiceIntent);
             }
         });
-        bindService(gpsForegroundServiceIntent, this, BIND_ABOVE_CLIENT);
+        bindService(gpsForegroundServiceIntent, serviceConnection, BIND_ABOVE_CLIENT);
     }
 
     @Override
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
         } else {
             startForegroundService(gpsForegroundServiceIntent);
-            bindService(gpsForegroundServiceIntent, this, BIND_ABOVE_CLIENT);
+            bindService(gpsForegroundServiceIntent, serviceConnection, BIND_ABOVE_CLIENT);
         }
     }
 
@@ -80,16 +80,16 @@ public class MainActivity extends AppCompatActivity implements ServiceConnection
         return null;
     }
 
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder binder) {
-        GpsForegroundService service = ((GpsForegroundService.GpsBinder) binder).getService();
+    private final ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            ((GpsForegroundService.GpsBinder) binder).setIsRunningListener(isRunning ->
+                    mButton.setText(isRunning ? R.string.stop_text : R.string.start_text)
+            );
+        }
 
-        service.setIsRunningListener(isRunning ->
-                mButton.setText(isRunning ? R.string.stop_text : R.string.start_text)
-        );
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-    }
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+        }
+    };
 }

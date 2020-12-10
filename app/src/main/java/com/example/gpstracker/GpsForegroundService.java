@@ -1,24 +1,16 @@
 package com.example.gpstracker;
 
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.os.Binder;
 import android.os.Build;
 import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Parcel;
-import android.os.RemoteException;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
-import java.io.FileDescriptor;
 import java.util.function.Consumer;
 
 public class GpsForegroundService extends Service {
@@ -27,31 +19,21 @@ public class GpsForegroundService extends Service {
     private boolean isRunning = false;
     private Consumer<Boolean> isRunningListener;
 
-    public GpsForegroundService() {
-    }
-
-    public void setIsRunningListener(Consumer<Boolean> isRunningListener) {
-        this.isRunningListener = isRunningListener;
-        if (isRunningListener != null) isRunningListener.accept(isRunning);
-    }
-
-    class GpsBinder extends Binder {
-        public GpsForegroundService getService() {
-            return GpsForegroundService.this;
+    public class GpsBinder extends Binder {
+        public void setIsRunningListener(Consumer<Boolean> isRunningListener) {
+            GpsForegroundService.this.isRunningListener = isRunningListener;
+            if (isRunningListener != null) isRunningListener.accept(isRunning);
         }
     }
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-//        throw new UnsupportedOperationException("Not yet implemented");
         return new GpsBinder();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-//        String input = intent.getStringExtra("INPUT_EXTRA");
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
