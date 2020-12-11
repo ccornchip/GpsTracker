@@ -12,11 +12,18 @@ function start() {
 
     const socket = new WebSocket(address);
 
-/*
     socket.onopen = function(event) {
-        socket.send("Hello from browser");
+        content.innerHTML = 'Web socket open';
     };
-*/
+
+    socket.onerror = function(event) {
+        content.innerHTML = 'Web socket error';
+    };
+
+    socket.onclose = function(event) {
+        content.innerHTML = 'Web socket closed';
+    };
+
     socket.onmessage = function (event) {
         console.log(event.data);
         content.innerHTML = event.data;

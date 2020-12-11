@@ -77,7 +77,7 @@ public class GpsForegroundService extends Service {
         isRunning = true;
         if (isRunningListener != null) isRunningListener.accept(true);
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
     @Override
@@ -114,7 +114,7 @@ public class GpsForegroundService extends Service {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
             long time = location.getTime();
-            String json = "{\"timestamp\":" + time +
+            String json = "{\"timestamp\":" + time/1000 +
                     ",\"latitude\":" + latitude +
                     ",\"longitude\":" + longitude + "}";
             wss.sendMessage(json);
