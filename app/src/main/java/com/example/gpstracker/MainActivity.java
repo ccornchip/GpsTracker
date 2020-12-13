@@ -14,6 +14,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -42,6 +51,43 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 stopService(gpsForegroundServiceIntent);
             }
+        });
+
+        final RequestQueue requestQueue = Volley.newRequestQueue(this);
+        findViewById(R.id.button2).setOnClickListener(v -> {
+            requestQueue.add(new StringRequest(Request.Method.POST,
+                    "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php",
+                    (String response) -> {
+                        System.out.println(response);
+                    }, (VolleyError error) -> {
+                         System.out.println(error);
+                    }){
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    return "data=kiki".getBytes();
+                }
+            });
+
+//            requestQueue.add(new Request<String>(Request.Method.POST,
+//                    "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php",
+//                    error -> {
+//                        System.out.println(error);
+//                    }) {
+//
+//                @Override
+//                public byte[] getBody() throws AuthFailureError {
+//                    return "data=fromappli".getBytes();
+//                }
+//
+//                @Override
+//                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+//                    return new Response<String>();
+//                }
+//
+//                @Override
+//                protected void deliverResponse(String response) {
+//                }
+//            });
         });
         bindService(gpsForegroundServiceIntent, serviceConnection, BIND_ABOVE_CLIENT);
     }
