@@ -79,8 +79,8 @@ public class GpsForegroundService extends Service {
         startForeground(1, builder.build());
 
         // Start the web socket
-        int port = 3000;
-        InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
+//        int port = 3000;
+//        InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
 //        wss = new MyWebSocketServer(inetSocketAddress);
 //        wss.start();
 
@@ -137,7 +137,7 @@ public class GpsForegroundService extends Service {
             mRequestQueue.add(
                     new StringRequest(
                             Request.Method.POST,
-                            "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php",
+                            MainActivity.URL,
                             null, null) {
                         @Override
                         public byte[] getBody() {

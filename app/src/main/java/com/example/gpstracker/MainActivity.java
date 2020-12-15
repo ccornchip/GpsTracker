@@ -29,6 +29,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String URL = "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php";
 
     private Button mButton;
     private Intent gpsForegroundServiceIntent;
@@ -56,38 +57,13 @@ public class MainActivity extends AppCompatActivity {
         final RequestQueue requestQueue = Volley.newRequestQueue(this);
         findViewById(R.id.button2).setOnClickListener(v -> {
             requestQueue.add(new StringRequest(Request.Method.POST,
-                    "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php",
-                    (String response) -> {
-                        System.out.println(response);
-                    }, (VolleyError error) -> {
-                         System.out.println(error);
-                    }){
+                    URL, System.out::println, System.out::println){
                 @Override
-                public byte[] getBody() throws AuthFailureError {
+                public byte[] getBody() {
                     return "data=kiki".getBytes();
                 }
             });
 
-//            requestQueue.add(new Request<String>(Request.Method.POST,
-//                    "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php",
-//                    error -> {
-//                        System.out.println(error);
-//                    }) {
-//
-//                @Override
-//                public byte[] getBody() throws AuthFailureError {
-//                    return "data=fromappli".getBytes();
-//                }
-//
-//                @Override
-//                protected Response<String> parseNetworkResponse(NetworkResponse response) {
-//                    return new Response<String>();
-//                }
-//
-//                @Override
-//                protected void deliverResponse(String response) {
-//                }
-//            });
         });
         bindService(gpsForegroundServiceIntent, serviceConnection, BIND_ABOVE_CLIENT);
     }
@@ -99,8 +75,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void askPermissionsAndStartService() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         } else {
             startForegroundService(gpsForegroundServiceIntent);
             bindService(gpsForegroundServiceIntent, serviceConnection, BIND_ABOVE_CLIENT);
