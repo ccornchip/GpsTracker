@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String URL = "http://xbacams.cluster028.hosting.ovh.net/api/track-api.php";
 
     private Button mButton;
+    private TextView mTextView;
     private Intent gpsForegroundServiceIntent;
 
     @Override
@@ -40,12 +41,12 @@ public class MainActivity extends AppCompatActivity {
         gpsForegroundServiceIntent = new Intent(this, GpsForegroundService.class);
         setContentView(R.layout.activity_main);
 
-        TextView textView = findViewById(R.id.textView);
-        textView.setText(getIpAddress());
+        mTextView = findViewById(R.id.textView);
+        mTextView.setText(getIpAddress());
 
         mButton = findViewById(R.id.button);
         mButton.setOnClickListener(v -> {
-            textView.setText(getIpAddress());
+            mTextView.setText(getIpAddress());
 
             if (mButton.getText().equals(getResources().getString(R.string.start_text))) {
                 askPermissionsAndStartService();
@@ -107,9 +108,11 @@ public class MainActivity extends AppCompatActivity {
     private final ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
-            ((GpsForegroundService.GpsBinder) binder).setIsRunningListener(isRunning ->
+            GpsForegroundService.GpsBinder gpsBinder = (GpsForegroundService.GpsBinder) binder;
+            gpsBinder.setIsRunningListener(isRunning ->
                     mButton.setText(isRunning ? R.string.stop_text : R.string.start_text)
             );
+            gpsBinder.setDataSentListener(time -> mTextView.setText(time.toString()));
         }
 
         @Override

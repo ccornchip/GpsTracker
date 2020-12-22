@@ -37,11 +37,11 @@ public class GpsForegroundService extends Service {
     public static final String CHANNEL_ID = "CHANNEL_ID";
 
     private LocationManager mLocationManager;
-//    private MyWebSocketServer wss;
 
     private boolean isRunning = false;
-    private Consumer<Boolean> isRunningListener;
     private RequestQueue mRequestQueue;
+    private Consumer<Boolean> isRunningListener;
+    private Consumer<Long> mDataSentListener;
 
     @Override
     public void onCreate() {
@@ -54,6 +54,10 @@ public class GpsForegroundService extends Service {
         public void setIsRunningListener(Consumer<Boolean> isRunningListener) {
             GpsForegroundService.this.isRunningListener = isRunningListener;
             if (isRunningListener != null) isRunningListener.accept(isRunning);
+        }
+
+        public void setDataSentListener(Consumer<Long> dataSentListener) {
+            GpsForegroundService.this.mDataSentListener = dataSentListener;
         }
     }
 
@@ -78,12 +82,6 @@ public class GpsForegroundService extends Service {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         startForeground(1, builder.build());
 
-        // Start the web socket
-//        int port = 3000;
-//        InetSocketAddress inetSocketAddress = new InetSocketAddress(port);
-//        wss = new MyWebSocketServer(inetSocketAddress);
-//        wss.start();
-
         // Set the GPS listener
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mLocationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
@@ -99,13 +97,6 @@ public class GpsForegroundService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        // Stop the web socket
-//        try {
-//            wss.stop();
-//        } catch (InterruptedException | IOException e) {
-//            e.printStackTrace();
-//        }
 
         // Unset the GPS listener
         mLocationManager.removeUpdates(locationListener);
@@ -123,22 +114,22 @@ public class GpsForegroundService extends Service {
 
         @Override
         public void onProviderEnabled(@NonNull String provider) {
+            Toast.makeText(GpsForegroundService.this, "GPS enabled", Toast.LENGTH_SHORT).show();
         }
 
         @Override
         public void onLocationChanged(@NonNull Location location) {
             double latitude = location.getLatitude();
             double longitude = location.getLongitude();
-            long time = location.getTime();
-            final String json = "{\"timestamp\":" + time / 1000 +
+            final long time = location.getTime() / 1000;
+
+            final String json = "{\"timestamp\":" + time +
                     ",\"latitude\":" + latitude +
                     ",\"longitude\":" + longitude + "}";
-//            wss.sendMessage(json);
             mRequestQueue.add(
-                    new StringRequest(
-                            Request.Method.POST,
-                            MainActivity.URL,
-                            null, null) {
+                    new StringRequest(Request.Method.POST, MainActivity.URL,
+                            response -> mDataSentListener.accept(time),
+                            null) {
                         @Override
                         public byte[] getBody() {
                             return json.getBytes();
